@@ -45,14 +45,14 @@ func (p *parser) fillFlagMap(c *Command) {
 	}
 }
 
+// Sets the value of a flag, and indicates that there has been an attempt to set a value.
+// `isValueSet` must be set to true even if there was an attempt to set an invalid value.
+// Not doing so will result in an additional error for an unset value.
 func (p *parser) setValue(f *flag, val string) error {
 	err := f.setValue(val)
-	f.isValueSet = true // We set it to true even if there is an attempt to set an invalid value
-	if err != nil {
-		return err
-	}
+	f.isValueSet = true
 
-	return nil
+	return err
 }
 
 func (p *parser) setNextTokenAsValue(f *flag) error {
