@@ -13,3 +13,7 @@ type Command struct {
 
 	parent *Command
 }
+
+func (c *Command) Execute() {
+	c.parseFlags()
+}
