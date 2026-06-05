@@ -1,31 +1,20 @@
 package mon
 
 import (
-	"os"
 	"strings"
 )
 
-var (
+type parser struct {
 	flagMap  map[string]*flag
+	tokens   []string
 	tokenIdx int
-)
-
-func init() {
-	flagMap = make(map[string]*flag)
-	tokenIdx = 1
 }
 
-func fillFlagMap(c *Command) {
-	for _, f := range c.flags {
-		for _, l := range f.longNames {
-			if l != "" {
-				flagMap["--"+l] = &f
-			}
-		}
-
-		if f.shortName != "" {
-			flagMap["-"+f.shortName] = &f
-		}
+func newParser(tokens []string) parser {
+	return parser{
+		flagMap:  make(map[string]*flag),
+		tokens: tokens,
+		tokenIdx: 1,
 	}
 }
 
@@ -41,22 +30,36 @@ func isFlag(s string) bool {
 	return isLongFlag(s) || isShortFlag(s)
 }
 
-func (c *Command) parseFlags() {
-	fillFlagMap(c)
+func (p *parser) fillFlagMap(c *Command) {
+	for _, f := range c.flags {
+		for _, l := range f.longNames {
+			if l != "" {
+				p.flagMap["--"+l] = &f
+			}
+		}
 
-	for tokenIdx < len(os.Args) {
-		token := os.Args[tokenIdx]
+		if f.shortName != "" {
+			p.flagMap["-"+f.shortName] = &f
+		}
+	}
+}
+
+func (p *parser) parseFlags(c *Command) {
+	p.fillFlagMap(c)
+
+	for p.tokenIdx < len(p.tokens) {
+		token := p.tokens[p.tokenIdx]
 
 		if isFlag(token) {
-			f, found := flagMap[token]
+			f, found := p.flagMap[token]
 			if !found {
 				// Warning: Unrecognized flag
 				continue
 			}
 
 			if f.requiresVal {
-				if tokenIdx+1 < len(os.Args) && !isFlag(os.Args[tokenIdx+1]) {
-					f.setValue(os.Args[tokenIdx+1])
+				if p.tokenIdx+1 < len(p.tokens) && !isFlag(p.tokens[p.tokenIdx+1]) {
+					f.setValue(p.tokens[p.tokenIdx+1])
 					f.isValueSet = true
 				} else {
 					// Error: No value supplied for flag

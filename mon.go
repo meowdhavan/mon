@@ -1,5 +1,7 @@
 package mon
 
+import "os"
+
 type Command struct {
 	Names      []string
 	AboutShort string
@@ -15,5 +17,6 @@ type Command struct {
 }
 
 func (c *Command) Execute() {
-	c.parseFlags()
+	p := newParser(os.Args)
+	p.parseFlags(c)
 }
