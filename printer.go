@@ -180,6 +180,16 @@ func (p *printer) printFlags(c *Command) {
 
 	tw := tabwriter.NewWriter(p.w, 5, 0, 2, ' ', 0)
 
+	p.addFlags(c, tw)
+
+	tw.Flush()
+}
+
+func (p *printer) addFlags(c *Command, tw *tabwriter.Writer) {
+	if c == nil {
+		return
+	}
+
 	for _, f := range c.flags {
 		fmt.Fprintf(tw, "    %s", p.Focus("--"+f.longNames[0]))
 
@@ -193,5 +203,5 @@ func (p *printer) printFlags(c *Command) {
 		fmt.Fprintln(tw)
 	}
 
-	tw.Flush()
+	p.addFlags(c.parent, tw)
 }
