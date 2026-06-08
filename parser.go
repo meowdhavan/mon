@@ -86,10 +86,11 @@ func (p *parser) setNextTokenAsValue(f *flag) error {
 		p.tokenIdx++
 
 		if err != nil {
-			return err
+			return errors.New("Invalid value supplied for flag: --" + f.longNames[0])
 		}
 	} else {
-		return errors.New("No value supplied for flag")
+		f.isValueSet = true
+		return errors.New("No value supplied for flag: --" + f.longNames[0])
 	}
 
 	return nil
@@ -105,7 +106,8 @@ func (p *parser) parseFlags() {
 		if isLongFlag(token) {
 			f, found := p.flagMap[token]
 			if !found {
-				p.warnings = append(p.warnings, errors.New("Unrecognized flag: " + token))
+				warning := errors.New("Unrecognized flag: " + token)
+				p.warnings = append(p.warnings, warning)
 				continue
 			}
 
@@ -124,7 +126,8 @@ func (p *parser) parseFlags() {
 			for i, ch := range token[1:] {
 				f, found := p.flagMap["-"+string(ch)]
 				if !found {
-					p.warnings = append(p.warnings, errors.New("Unrecognized flag: -" + string(ch)))
+					warning := errors.New("Unrecognized flag: -" + string(ch))
+					p.warnings = append(p.warnings, warning)
 					continue
 				}
 
@@ -153,7 +156,8 @@ func (p *parser) parseFlags() {
 			if len(p.currentCmd.subcommands) > 0 {
 				s, found := p.subcommandsMap[token]
 				if !found {
-					p.warnings = append(p.warnings, errors.New("Unrecognized subcommand: " + token))
+					warning := errors.New("Unrecognized subcommand: " + token)
+					p.warnings = append(p.warnings, warning)
 					continue
 				}
 
@@ -165,7 +169,7 @@ func (p *parser) parseFlags() {
 					a := p.currentCmd.requiredPosArgs[p.requiredPosArgIdx]
 					err := a.setValue(token)
 					if err != nil {
-						// Error
+						p.errors = append(p.errors, err)
 					}
 
 					p.requiredPosArgIdx++
@@ -173,14 +177,16 @@ func (p *parser) parseFlags() {
 					a := p.currentCmd.optionalPosArgs[p.optionalPosArgIdx]
 					err := a.setValue(token)
 					if err != nil {
-						// Error
+						p.errors = append(p.errors, err)
 					}
 
 					p.optionalPosArgIdx++
 				} else {
 					v := p.currentCmd.varLenArg
 					if v == nil {
-						// Warning: Unrecognized argument
+						warning := errors.New("Unrecognized argument: " + token)
+						p.warnings = append(p.warnings, warning)
+						continue
 					}
 					v.addValue(token)
 				}
@@ -190,7 +196,8 @@ func (p *parser) parseFlags() {
 
 	for _, f := range p.flagMap {
 		if f.isRequired && !f.isValueSet {
-			p.errors = append(p.errors, errors.New("No value supplied for required flag: --" + f.longNames[0]))
+			err := errors.New("No value supplied for required flag: --" + f.longNames[0])
+			p.errors = append(p.errors, err)
 		}
 	}
 }
