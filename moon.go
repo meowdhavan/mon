@@ -20,7 +20,7 @@ func NewMoon(rootCmd *Command) *Moon {
 func (m *Moon) Execute() {
 	showHelp := false
 
-	m.rootCmd.AddBoolFlag(&showHelp, []string{"help"}, "h", "Show help message", false)
+	m.rootCmd.AddBoolFlag(&showHelp, []string{"help"}, "h", "Show help message")
 
 	parser := newParser(m.rootCmd, os.Args)
 	parser.parseFlags()

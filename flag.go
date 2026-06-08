@@ -54,7 +54,7 @@ func (c *Command) AddMultiStringFlag(target *[]string, longNames []string, short
 	})
 }
 
-func (c *Command) AddBoolFlag(target *bool, longNames []string, shortName string, about string, isRequired bool) {
+func (c *Command) AddBoolFlag(target *bool, longNames []string, shortName string, about string) {
 	*target = false
 
 	c.flags = append(c.flags, &flag{
@@ -62,7 +62,7 @@ func (c *Command) AddBoolFlag(target *bool, longNames []string, shortName string
 		shortName: shortName,
 		about: about,
 		requiresVal: false,
-		isRequired: isRequired,
+		isRequired: false,
 		setValue: func(s string) error {
 			v, err := converter.ToBool(s)
 			if err != nil {
