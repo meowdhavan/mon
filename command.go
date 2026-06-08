@@ -14,3 +14,8 @@ type Command struct {
 
 	parent *Command
 }
+
+func (c *Command) AddSubcommand(s *Command) {
+	s.parent = c
+	c.subcommands = append(c.subcommands, s)
+}
