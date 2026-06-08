@@ -12,18 +12,19 @@ func Execute(rootCmd *Command) {
 
 	cmd := parser.currentCmd
 
+	printer := newPrinter(os.Stdout)
+
 	if showHelp {
-		printer := newPrinter(os.Stdout)
 		printer.printHelp(cmd)
 		os.Exit(0)
 	}
 
-	if len(parser.errors) > 0 {
-		// TODO
-	}
+	printer.printFullError(&parser)
+	printer.printFullWarning(&parser)
 
-	if len(parser.warnings) > 0 {
-		// TODO
+	if len(parser.errors) > 0 {
+		printer.printFullUsage(cmd)
+		os.Exit(3)
 	}
 
 	cmd.Run()

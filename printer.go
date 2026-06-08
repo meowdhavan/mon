@@ -3,6 +3,7 @@ package moon
 import (
 	"fmt"
 	"io"
+	"strconv"
 	"text/tabwriter"
 )
 
@@ -32,6 +33,18 @@ func underlineText(s string) string {
 	return fmt.Sprintf("\x1b[4m%s\x1b[24m", s)
 }
 
+func (p *printer) printError(parser *parser) {
+	for _, e := range parser.errors {
+		fmt.Fprintf(p.w, "    - %s\n", e.Error())
+	}
+}
+
+func (p *printer) printWarning(parser *parser) {
+	for _, e := range parser.warnings {
+		fmt.Fprintf(p.w, "    - %s\n", e.Error())
+	}
+}
+
 func (p *printer) printHelp(c *Command) {
 	p.printIntroLine(c)
 
@@ -42,6 +55,36 @@ func (p *printer) printHelp(c *Command) {
 
 	fmt.Fprintln(p.w)
 	p.printFullUsage(c)
+}
+
+func (p *printer) printFullError(parser *parser) {
+	if len(parser.errors) == 0 {
+		return
+	}
+
+	if len(parser.errors) == 1 {
+		fmt.Fprintf(p.w, "%s\n", p.Heading("Error:"))
+	} else {
+		fmt.Fprintf(p.w, "%s\n", p.Heading("Errors (" + strconv.Itoa(len(parser.errors)) + "):"))
+	}
+
+	p.printError(parser)
+	fmt.Fprintln(p.w)
+}
+
+func (p *printer) printFullWarning(parser *parser) {
+	if len(parser.warnings) == 0 {
+		return
+	}
+
+	if len(parser.warnings) == 1 {
+		fmt.Fprintf(p.w, "%s\n", p.Heading("Warning:"))
+	} else {
+		fmt.Fprintf(p.w, "%s\n", p.Heading("Warnings (" + strconv.Itoa(len(parser.warnings)) + "):"))
+	}
+
+	p.printWarning(parser)
+	fmt.Fprintln(p.w)
 }
 
 func (p *printer) printFullUsage(c *Command) {
