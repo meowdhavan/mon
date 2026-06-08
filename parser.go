@@ -45,12 +45,12 @@ func (p *parser) fillFlagMap() {
 	for _, f := range p.currentCmd.flags {
 		for _, l := range f.longNames {
 			if l != "" {
-				p.flagMap["--"+l] = &f
+				p.flagMap["--"+l] = f
 			}
 		}
 
 		if f.shortName != "" {
-			p.flagMap["-"+f.shortName] = &f
+			p.flagMap["-"+f.shortName] = f
 		}
 	}
 }

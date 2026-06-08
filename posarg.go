@@ -15,7 +15,7 @@ type varLenArg struct {
 }
 
 func (c *Command) AddStringPosArg(target *string, name string, about string, isRequired bool) {
-	posArg := posArg{
+	posArg := &posArg{
 		name:  name,
 		about: about,
 		setValue: func(s string) error {
@@ -37,7 +37,7 @@ func (c *Command) AddStringPosArg(target *string, name string, about string, isR
 }
 
 func (c *Command) AddBoolPosArg(target *bool, name string, about string, isRequired bool) {
-	posArg := posArg{
+	posArg := &posArg{
 		name:  name,
 		about: about,
 		setValue: func(s string) error {
@@ -59,7 +59,7 @@ func (c *Command) AddBoolPosArg(target *bool, name string, about string, isRequi
 }
 
 func (c *Command) AddIntPosArg(target *int, name string, about string, isRequired bool) {
-	posArg := posArg{
+	posArg := &posArg{
 		name:  name,
 		about: about,
 		setValue: func(s string) error {
@@ -81,7 +81,7 @@ func (c *Command) AddIntPosArg(target *int, name string, about string, isRequire
 }
 
 func (c *Command) AddStringVarLenArg(target []string, name string, about string) {
-	v := varLenArg{
+	v := &varLenArg{
 		name:  name,
 		about: about,
 		addValue: func(s string) error {
@@ -95,11 +95,11 @@ func (c *Command) AddStringVarLenArg(target []string, name string, about string)
 		},
 	}
 
-	c.varLenArg = &v
+	c.varLenArg = v
 }
 
 func (c *Command) AddIntVarLenArg(target []int, name string, about string) {
-	v := varLenArg{
+	v := &varLenArg{
 		name:  name,
 		about: about,
 		addValue: func(s string) error {
@@ -113,5 +113,5 @@ func (c *Command) AddIntVarLenArg(target []int, name string, about string) {
 		},
 	}
 
-	c.varLenArg = &v
+	c.varLenArg = v
 }

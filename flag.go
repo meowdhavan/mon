@@ -13,7 +13,7 @@ type flag struct {
 }
 
 func (c *Command) AddStringFlag(target *string, longNames []string, shortName string, about string, isRequired bool) {
-	c.flags = append(c.flags, flag{
+	c.flags = append(c.flags, &flag{
 		longNames: longNames,
 		shortName: shortName,
 		about: about,
@@ -33,7 +33,7 @@ func (c *Command) AddStringFlag(target *string, longNames []string, shortName st
 }
 
 func (c *Command) AddBoolFlag(target *bool, longNames []string, shortName string, about string, isRequired bool) {
-	c.flags = append(c.flags, flag{
+	c.flags = append(c.flags, &flag{
 		longNames: longNames,
 		shortName: shortName,
 		about: about,
@@ -53,7 +53,7 @@ func (c *Command) AddBoolFlag(target *bool, longNames []string, shortName string
 }
 
 func (c *Command) AddIntFlag(target *int, longNames []string, shortName string, about string, isRequired bool) {
-	c.flags = append(c.flags, flag{
+	c.flags = append(c.flags, &flag{
 		longNames: longNames,
 		shortName: shortName,
 		about: about,

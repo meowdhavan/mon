@@ -7,9 +7,9 @@ type Command struct {
 	Run        func() error
 
 	subcommands     map[string]*Command
-	flags           []flag
-	requiredPosArgs []posArg
-	optionalPosArgs []posArg
+	flags           []*flag
+	requiredPosArgs []*posArg
+	optionalPosArgs []*posArg
 	varLenArg       *varLenArg
 
 	parent *Command
