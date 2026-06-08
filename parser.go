@@ -6,10 +6,11 @@ import (
 )
 
 type parser struct {
-	currentCmd *Command
-	flagMap  map[string]*flag
 	tokens   []string
 	tokenIdx int
+	flagMap  map[string]*flag
+	subcommandsMap map[string]*Command
+	currentCmd *Command
 	requiredPosArgIdx int
 	optionalPosArgIdx int
 	errors []error
@@ -55,6 +56,20 @@ func (p *parser) fillFlagMap() {
 	}
 }
 
+func (p *parser) fillSubcommandsMap() {
+	for k := range p.subcommandsMap {
+		delete(p.subcommandsMap, k)
+	}
+
+	for _, s := range p.currentCmd.subcommands {
+		for _, name := range s.Names {
+			if name != "" {
+				p.subcommandsMap[name] = s
+			}
+		}
+	}
+}
+
 // Sets the value of a flag, and indicates that there has been an attempt to set a value.
 // `isValueSet` must be set to true even if there was an attempt to set an invalid value.
 // Not doing so will result in an additional error for an unset value.
@@ -82,6 +97,7 @@ func (p *parser) setNextTokenAsValue(f *flag) error {
 
 func (p *parser) parseFlags() {
 	p.fillFlagMap()
+	p.fillSubcommandsMap()
 
 	for ; p.tokenIdx < len(p.tokens); p.tokenIdx++ {
 		token := p.tokens[p.tokenIdx]
@@ -135,7 +151,7 @@ func (p *parser) parseFlags() {
 			}
 		} else {
 			if len(p.currentCmd.subcommands) > 0 {
-				s, found := p.currentCmd.subcommands[token]
+				s, found := p.subcommandsMap[token]
 				if !found {
 					p.warnings = append(p.warnings, errors.New("Unrecognized subcommand: " + token))
 					continue
@@ -143,6 +159,7 @@ func (p *parser) parseFlags() {
 
 				p.currentCmd = s
 				p.fillFlagMap()
+				p.fillSubcommandsMap()
 			} else {
 				if p.requiredPosArgIdx < len(p.currentCmd.requiredPosArgs) {
 					a := p.currentCmd.requiredPosArgs[p.requiredPosArgIdx]

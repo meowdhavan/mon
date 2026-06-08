@@ -6,7 +6,7 @@ type Command struct {
 	AboutLong  string
 	Run        func() error
 
-	subcommands     map[string]*Command
+	subcommands     []*Command
 	flags           []*flag
 	requiredPosArgs []*posArg
 	optionalPosArgs []*posArg
