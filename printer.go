@@ -12,7 +12,7 @@ type printer struct {
 	Focus   func(string) string
 }
 
-func NewPrinter(w io.Writer) printer {
+func newPrinter(w io.Writer) printer {
 	return printer{
 		w: w,
 		Heading: func(s string) string {
@@ -115,9 +115,8 @@ func (p *printer) printFlags(c *Command) {
 		}
 
 		fmt.Fprintf(tw, "\t%s", f.about)
+		fmt.Fprintln(tw)
 	}
-
-	fmt.Fprintln(tw)
 
 	tw.Flush()
 }

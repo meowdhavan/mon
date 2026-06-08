@@ -28,7 +28,7 @@ func TestIntroLinePrint(t *testing.T) {
 
 	w := CustomWriter{}
 
-	p := NewPrinter(&w)
+	p := newPrinter(&w)
 	p.Focus = func(s string) string {
 		return s
 	}
