@@ -75,7 +75,9 @@ func (p *printer) printHelp(c *Command) {
 	p.printIntroLine(c)
 	p.newLine()
 	p.printAboutLong(c)
-	p.newLine()
+	if c.AboutLong != "" {
+		p.newLine()
+	}
 	p.printFullUsage(c)
 }
 
@@ -133,8 +135,17 @@ func (p *printer) printUsage(c *Command) {
 	if len(c.subcommands) > 0 {
 		fmt.Fprint(p.w, " <COMMAND>")
 	} else {
-		fmt.Fprint(p.w, " ")
-		// TODO: Pos Args
+		for _, a := range c.requiredPosArgs {
+			fmt.Fprintf(p.w, " <%s>", a.name)
+		}
+
+		for _, a := range c.optionalPosArgs {
+			fmt.Fprintf(p.w, " <%s>", a.name)
+		}
+
+		if c.varLenArg != nil {
+			fmt.Fprintf(p.w, " ...<%s>", c.varLenArg.name)
+		}
 	}
 
 	fmt.Fprintln(p.w)
