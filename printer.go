@@ -3,7 +3,9 @@ package moon
 import (
 	"fmt"
 	"io"
+	"slices"
 	"strconv"
+	"strings"
 	"text/tabwriter"
 )
 
@@ -91,7 +93,9 @@ func (p *printer) printFullUsage(c *Command) {
 	p.printUsage(c)
 	p.newLine()
 	p.printSubcommands(c)
-	p.newLine()
+	if len(c.subcommands) > 0 {
+		p.newLine()
+	}
 	p.printFlags(c)
 }
 
@@ -108,7 +112,19 @@ func (p *printer) printUsage(c *Command) {
 
 	fmt.Fprint(p.w, "    ")
 
-	fmt.Fprintf(p.w, "%s", c.Names[0])
+	var cur *Command
+	cur = c
+
+	commands := []string{}
+
+	for cur != nil {
+		commands = append(commands, cur.Names[0])
+		cur = cur.parent
+	}
+
+	slices.Reverse(commands)
+
+	fmt.Fprintf(p.w, "%s", strings.Join(commands, " "))
 
 	if len(c.flags) > 0 {
 		fmt.Fprint(p.w, " [FLAGS]")
