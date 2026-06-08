@@ -105,3 +105,33 @@ func TestMultitypePosArgParse(t *testing.T) {
 		t.Errorf("targetSlice mismatch; got=%v; want %v", targetSlice, gotIntSlice)
 	}
 }
+
+func TestMultiStringFlagParse(t *testing.T) {
+	var targetSlice []string
+
+	c := Command{}
+	c.AddMultiStringFlag(&targetSlice, []string{"vla"}, "v", "")
+
+	p := newParser(&c, []string{"app", "--vla", "a", "-v", "b", "--vla", "c"})
+	p.parseFlags()
+
+	gotIntSlice := []string{"a", "b", "c"}
+	if !slices.Equal(targetSlice, gotIntSlice) {
+		t.Errorf("targetSlice mismatch; got=%v; want %v", targetSlice, gotIntSlice)
+	}
+}
+
+func TestMultiBoolFlagParse(t *testing.T) {
+	var target int
+
+	c := Command{}
+	c.AddMultiBoolFlag(&target, []string{"vla"}, "v", "")
+
+	p := newParser(&c, []string{"app", "--vla", "-v", "--vla", "-v", "--vla"})
+	p.parseFlags()
+
+	want := 5
+	if target != want {
+		t.Errorf("target mismatch; got=%v; want %v", target, want)
+	}
+}

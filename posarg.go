@@ -36,7 +36,30 @@ func (c *Command) AddStringPosArg(target *string, name string, about string, isR
 	}
 }
 
+func (c *Command) AddStringVarLenArg(target *[]string, name string, about string) {
+	*target = []string{}
+
+	v := &varLenArg{
+		name:  name,
+		about: about,
+		addValue: func(s string) error {
+			v, err := converter.ToString(s)
+			if err != nil {
+				return err
+			}
+
+			*target = append(*target, v)
+			return nil
+		},
+	}
+
+	c.varLenArg = v
+}
+
+
 func (c *Command) AddBoolPosArg(target *bool, name string, about string, isRequired bool) {
+	*target = false
+
 	posArg := &posArg{
 		name:  name,
 		about: about,
@@ -80,25 +103,9 @@ func (c *Command) AddIntPosArg(target *int, name string, about string, isRequire
 	}
 }
 
-func (c *Command) AddStringVarLenArg(target *[]string, name string, about string) {
-	v := &varLenArg{
-		name:  name,
-		about: about,
-		addValue: func(s string) error {
-			v, err := converter.ToString(s)
-			if err != nil {
-				return err
-			}
-
-			*target = append(*target, v)
-			return nil
-		},
-	}
-
-	c.varLenArg = v
-}
-
 func (c *Command) AddIntVarLenArg(target *[]int, name string, about string) {
+	*target = []int{}
+
 	v := &varLenArg{
 		name:  name,
 		about: about,
