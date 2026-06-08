@@ -12,9 +12,8 @@ func TestLongStringFlagParse(t *testing.T) {
 	c.AddStringFlag(&target1, []string{"test-flag-1"}, "", "", false)
 	c.AddStringFlag(&target2, []string{"test-flag-2"}, "", "", false)
 
-	p := newParser([]string{"app", "--test-flag-1", "target_value_1", "--test-flag-2", "target_value_2"})
-
-	p.parseFlags(&c)
+	p := newParser(&c, []string{"app", "--test-flag-1", "target_value_1", "--test-flag-2", "target_value_2"})
+	p.parseFlags()
 
 	if target1 != "target_value_1" {
 		t.Errorf("target1=%s; want %s", target1, "target_value_1")
@@ -33,9 +32,8 @@ func TestShortStringFlagParse(t *testing.T) {
 	c.AddStringFlag(&targetA, []string{}, "a", "", false)
 	c.AddStringFlag(&targetB, []string{}, "b", "", false)
 
-	p := newParser([]string{"app", "-a", "target_value_1", "-btarget_value_2"})
-
-	p.parseFlags(&c)
+	p := newParser(&c, []string{"app", "-a", "target_value_1", "-btarget_value_2"})
+	p.parseFlags()
 
 	if targetA != "target_value_1" {
 		t.Errorf("targetA=%s; want %s", targetA, "target_value_1")

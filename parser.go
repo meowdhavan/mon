@@ -6,16 +6,20 @@ import (
 )
 
 type parser struct {
+	currentCmd *Command
 	flagMap  map[string]*flag
 	tokens   []string
 	tokenIdx int
+	errors []error
 }
 
-func newParser(tokens []string) parser {
+func newParser(rootCmd *Command, tokens []string) parser {
 	return parser{
+		currentCmd: rootCmd,
 		flagMap:  make(map[string]*flag),
 		tokens: tokens,
 		tokenIdx: 1,
+		errors: make([]error, 0),
 	}
 }
 
@@ -31,8 +35,8 @@ func isFlag(s string) bool {
 	return isLongFlag(s) || isShortFlag(s)
 }
 
-func (p *parser) fillFlagMap(c *Command) {
-	for _, f := range c.flags {
+func (p *parser) fillFlagMap() {
+	for _, f := range p.currentCmd.flags {
 		for _, l := range f.longNames {
 			if l != "" {
 				p.flagMap["--"+l] = &f
@@ -70,8 +74,8 @@ func (p *parser) setNextTokenAsValue(f *flag) error {
 	return nil
 }
 
-func (p *parser) parseFlags(c *Command) {
-	p.fillFlagMap(c)
+func (p *parser) parseFlags() {
+	p.fillFlagMap()
 
 	for ; p.tokenIdx < len(p.tokens); p.tokenIdx++ {
 		token := p.tokens[p.tokenIdx]
@@ -86,12 +90,12 @@ func (p *parser) parseFlags(c *Command) {
 			if f.requiresVal {
 				err := p.setNextTokenAsValue(f)
 				if err != nil {
-					c.errors = append(c.errors, err)
+					p.errors = append(p.errors, err)
 				}
 			} else {
 				err := p.setValue(f, "true")
 				if err != nil {
-					c.errors = append(c.errors, err)
+					p.errors = append(p.errors, err)
 				}
 			}
 		} else if isShortFlag(token) {
@@ -106,12 +110,12 @@ func (p *parser) parseFlags(c *Command) {
 					if i + 2 < len(token) {
 						err := p.setValue(f, token[i+2:])
 						if err != nil {
-							c.errors = append(c.errors, err)
+							p.errors = append(p.errors, err)
 						}
 					} else {
 						err := p.setNextTokenAsValue(f)
 						if err != nil {
-							c.errors = append(c.errors, err)
+							p.errors = append(p.errors, err)
 						}
 					}
 
@@ -119,16 +123,22 @@ func (p *parser) parseFlags(c *Command) {
 				} else {
 					err := p.setValue(f, "true")
 					if err != nil {
-						c.errors = append(c.errors, err)
+						p.errors = append(p.errors, err)
 					}
 				}
 			}
 		} else {
-			// TODO: Subcommand
+			s, found := p.currentCmd.subcommands[token]
+			if !found {
+				// Warning: Unrecognized subcommand
+			} else {
+				p.currentCmd = s
+				p.fillFlagMap()
+			}
 		}
 	}
 
-	for _, f := range c.flags {
+	for _, f := range p.flagMap {
 		if f.isRequired && !f.isValueSet {
 			// Error: No value supplied for Required Flag
 		}

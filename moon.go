@@ -17,6 +17,6 @@ type Command struct {
 }
 
 func (c *Command) Execute() {
-	p := newParser(os.Args)
-	p.parseFlags(c)
+	p := newParser(c, os.Args)
+	p.parseFlags()
 }
