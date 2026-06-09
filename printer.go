@@ -10,22 +10,21 @@ import (
 )
 
 type Printer interface {
-	newLine()
-	printError(*parser)
-	printWarning(*parser)
 	printHelp(*Command)
-	printFullUsage(*Command)
+	printFullUsage(*Command, *[]error, *[]error)
 }
 
 type defaultPrinter struct {
-	w       io.Writer
-	Heading func(string) string
-	Focus   func(string) string
+	w                io.Writer
+	suppressWarnings bool
+	Heading          func(string) string
+	Focus            func(string) string
 }
 
-func newDefaultPrinter(w io.Writer) defaultPrinter {
+func NewDefaultPrinter(w io.Writer, suppressWarnings bool) defaultPrinter {
 	return defaultPrinter{
 		w: w,
+		suppressWarnings: suppressWarnings,
 		Heading: func(s string) string {
 			return fmt.Sprintf("\x1b[4m%s\x1b[24m", s)
 		},
@@ -35,50 +34,50 @@ func newDefaultPrinter(w io.Writer) defaultPrinter {
 	}
 }
 
-func (p *defaultPrinter) newLine() {
-	fmt.Fprintln(p.w)
-}
-
-func (p *defaultPrinter) printError(parser *parser) {
-	if len(parser.errors) == 0 {
+func (p *defaultPrinter) printErrors(errors *[]error) {
+	if len(*errors) == 0 {
 		return
 	}
 
-	if len(parser.errors) == 1 {
+	if len(*errors) == 1 {
 		fmt.Fprintf(p.w, "%s\n", p.Heading("Error:"))
 	} else {
-		fmt.Fprintf(p.w, "%s\n", p.Heading("Errors ("+strconv.Itoa(len(parser.errors))+"):"))
+		fmt.Fprintf(p.w, "%s\n", p.Heading("Errors ("+strconv.Itoa(len(*errors))+"):"))
 	}
 
-	for _, e := range parser.errors {
+	for _, e := range *errors {
 		fmt.Fprintf(p.w, "    - %s\n", e.Error())
 	}
+
+	fmt.Println(p.w)
 }
 
-func (p *defaultPrinter) printWarning(parser *parser) {
-	if len(parser.warnings) == 0 {
+func (p *defaultPrinter) printWarnings(warnings *[]error) {
+	if len(*warnings) == 0 {
 		return
 	}
 
-	if len(parser.warnings) == 1 {
+	if len(*warnings) == 1 {
 		fmt.Fprintf(p.w, "%s\n", p.Heading("Warning:"))
 	} else {
-		fmt.Fprintf(p.w, "%s\n", p.Heading("Warnings ("+strconv.Itoa(len(parser.warnings))+"):"))
+		fmt.Fprintf(p.w, "%s\n", p.Heading("Warnings ("+strconv.Itoa(len(*warnings))+"):"))
 	}
 
-	for _, e := range parser.warnings {
+	for _, e := range *warnings {
 		fmt.Fprintf(p.w, "    - %s\n", e.Error())
 	}
+
+	fmt.Println(p.w)
 }
 
 func (p *defaultPrinter) printHelp(c *Command) {
 	p.printIntroLine(c)
-	p.newLine()
+	fmt.Fprintln(p.w)
 	p.printAboutLong(c)
 	if c.AboutLong != "" {
-		p.newLine()
+		fmt.Fprintln(p.w)
 	}
-	p.printFullUsage(c)
+	p.printFullUsage(c, &[]error{}, &[]error{})
 }
 
 func (p *defaultPrinter) printIntroLine(c *Command) {
@@ -91,12 +90,14 @@ func (p *defaultPrinter) printIntroLine(c *Command) {
 	fmt.Fprintln(p.w)
 }
 
-func (p *defaultPrinter) printFullUsage(c *Command) {
+func (p *defaultPrinter) printFullUsage(c *Command, errors *[]error, warnings *[]error) {
+	p.printErrors(errors)
+	p.printWarnings(warnings)
 	p.printUsage(c)
-	p.newLine()
+	fmt.Fprintln(p.w)
 	p.printSubcommands(c)
 	if len(c.subcommands) > 0 {
-		p.newLine()
+		fmt.Fprintln(p.w)
 	}
 	p.printFlags(c)
 }

@@ -3,13 +3,12 @@ package moon
 import "os"
 
 type Moon struct {
-	rootCmd          *Command
-	SuppressWarnings bool
-	Printer          Printer
+	rootCmd *Command
+	Printer Printer
 }
 
 func NewMoon(rootCmd *Command) *Moon {
-	p := newDefaultPrinter(os.Stdout)
+	p := NewDefaultPrinter(os.Stdout, false)
 
 	return &Moon{
 		rootCmd: rootCmd,
@@ -32,20 +31,8 @@ func (m *Moon) Execute() {
 		os.Exit(0)
 	}
 
-	m.Printer.printError(&parser)
-	if len(parser.errors) > 0 {
-		m.Printer.newLine()
-	}
-
-	if !m.SuppressWarnings {
-		m.Printer.printWarning(&parser)
-		if len(parser.warnings) > 0 {
-			m.Printer.newLine()
-		}
-	}
-
 	if parser.unrecognizedSubcommand || len(parser.errors) > 0 {
-		m.Printer.printFullUsage(cmd)
+		m.Printer.printFullUsage(cmd, &parser.errors, &parser.warnings)
 		os.Exit(3)
 	}
 
