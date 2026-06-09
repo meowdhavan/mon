@@ -144,7 +144,7 @@ func (p *defaultPrinter) printUsage(c *Command) {
 		}
 
 		if c.varLenArg != nil {
-			fmt.Fprintf(p.w, " ...<%s>", c.varLenArg.name)
+			fmt.Fprintf(p.w, " <...%s>", c.varLenArg.name)
 		}
 	}
 
