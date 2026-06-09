@@ -46,7 +46,11 @@ func isFlag(s string) bool {
 
 func (p *parser) fillFlagMap() {
 	for _, f := range p.currentCmd.flags {
-		for _, l := range f.longNames {
+		if f.longName != "" {
+			p.flagMap["--"+f.longName] = f
+		}
+
+		for _, l := range f.aliases {
 			if l != "" {
 				p.flagMap["--"+l] = f
 			}
@@ -88,11 +92,11 @@ func (p *parser) setNextTokenAsValue(f *flag) error {
 		p.tokenIdx++
 
 		if err != nil {
-			return errors.New("Invalid value supplied for flag: --" + f.longNames[0])
+			return errors.New("Invalid value supplied for flag: --" + f.longName)
 		}
 	} else {
 		f.isValueSet = true
-		return errors.New("No value supplied for flag: --" + f.longNames[0])
+		return errors.New("No value supplied for flag: --" + f.longName)
 	}
 
 	return nil
@@ -202,7 +206,7 @@ func (p *parser) parseFlags() {
 		}
 
 		if !f.isValueSet && f.isRequired {
-			err := errors.New("Missing value for required flag: " + f.longNames[0])
+			err := errors.New("Missing value for required flag: " + f.longName)
 			p.errors = append(p.errors, err)
 		}
 	}

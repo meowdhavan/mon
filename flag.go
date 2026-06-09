@@ -5,7 +5,8 @@ import (
 )
 
 type flag struct {
-	longNames   []string
+	longName    string
+	aliases     []string
 	shortName   string
 	about       string
 	requiresVal bool
@@ -18,15 +19,9 @@ type flag struct {
 
 type flagOption func(*flag)
 
-func Alias(longName string) flagOption {
+func Alias(alias string) flagOption {
 	return func(f *flag) {
-		f.longNames = append(f.longNames, longName)
-	}
-}
-
-func About(about string) flagOption {
-	return func(f *flag) {
-		f.about = about
+		f.aliases = append(f.aliases, alias)
 	}
 }
 
@@ -48,10 +43,12 @@ func Required() flagOption {
 	}
 }
 
-func (c *Command) StringFlag(target *string, longName string, shortName string, options ...flagOption) {
+func (c *Command) StringFlag(target *string, longName string, shortName string, about string, options ...flagOption) {
 	f := &flag{
-		longNames: []string{longName},
-		shortName: shortName,
+		longName:    longName,
+		aliases:     []string{},
+		shortName:   shortName,
+		about:       about,
 		requiresVal: true,
 		setValue: func(s string) error {
 			v, err := converter.ToString(s)
@@ -71,12 +68,14 @@ func (c *Command) StringFlag(target *string, longName string, shortName string, 
 	c.flags = append(c.flags, f)
 }
 
-func (c *Command) MultiStringFlag(target *[]string, longName string, shortName string, options ...flagOption) {
+func (c *Command) MultiStringFlag(target *[]string, longName string, shortName string, about string, options ...flagOption) {
 	*target = []string{}
 
 	f := &flag{
-		longNames:   []string{longName},
+		longName:    longName,
+		aliases:     []string{},
 		shortName:   shortName,
+		about:       about,
 		requiresVal: true,
 		setValue: func(s string) error {
 			v, err := converter.ToString(s)
@@ -96,12 +95,14 @@ func (c *Command) MultiStringFlag(target *[]string, longName string, shortName s
 	c.flags = append(c.flags, f)
 }
 
-func (c *Command) BoolFlag(target *bool, longName string, shortName string, options ...flagOption) {
+func (c *Command) BoolFlag(target *bool, longName string, shortName string, about string, options ...flagOption) {
 	*target = false
 
 	f := &flag{
-		longNames:   []string{longName},
-		shortName:   shortName,
+		longName:  longName,
+		aliases:   []string{},
+		shortName: shortName,
+		about:     about,
 		setValue: func(s string) error {
 			v, err := converter.ToBool(s)
 			if err != nil {
@@ -120,12 +121,14 @@ func (c *Command) BoolFlag(target *bool, longName string, shortName string, opti
 	c.flags = append(c.flags, f)
 }
 
-func (c *Command) MultiBoolFlag(target *int, longName string, shortName string, options ...flagOption) {
+func (c *Command) MultiBoolFlag(target *int, longName string, shortName string, about string, options ...flagOption) {
 	*target = 0
 
 	f := &flag{
-		longNames:   []string{longName},
-		shortName:   shortName,
+		longName:  longName,
+		aliases:   []string{},
+		shortName: shortName,
+		about:     about,
 		setValue: func(s string) error {
 			v, err := converter.ToBool(s)
 			if err != nil {
@@ -147,10 +150,13 @@ func (c *Command) MultiBoolFlag(target *int, longName string, shortName string, 
 	c.flags = append(c.flags, f)
 }
 
-func (c *Command) IntFlag(target *int, longName string, shortName string, options ...flagOption) {
+func (c *Command) IntFlag(target *int, longName string, shortName string, about string, options ...flagOption) {
 	f := &flag{
-		longNames:   []string{longName},
-		shortName:   shortName,
+		longName:  longName,
+		aliases:   []string{},
+		shortName: shortName,
+		about:     about,
+
 		requiresVal: true,
 		setValue: func(s string) error {
 			v, err := converter.ToInt(s)
@@ -170,10 +176,12 @@ func (c *Command) IntFlag(target *int, longName string, shortName string, option
 	c.flags = append(c.flags, f)
 }
 
-func (c *Command) MultiIntFlag(target *[]int, longName string, shortName string, options ...flagOption) {
+func (c *Command) MultiIntFlag(target *[]int, longName string, shortName string, about string, options ...flagOption) {
 	f := &flag{
-		longNames:   []string{longName},
+		longName:    longName,
+		aliases:     []string{},
 		shortName:   shortName,
+		about:       about,
 		requiresVal: true,
 		setValue: func(s string) error {
 			v, err := converter.ToInt(s)
