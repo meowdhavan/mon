@@ -269,3 +269,42 @@ Global Flags:
 		t.Errorf("Full Help mismatch; got='%s', want='%s'", got, want)
 	}
 }
+
+func TestFlagFallbackPrint(t *testing.T) {
+	rootCmd := Command{
+		Name:       "app",
+		AboutShort: "short about for rootCmd",
+		AboutLong:  "Long About Section",
+	}
+
+	rootCmd.Flags().StringFlag(nil, "test-flag-1", "a", "Test Flag 1", Env("TEST_ENV_VAR"))
+	rootCmd.Flags().StringFlag(nil, "test-flag-2", "b", "Test Flag 2", Default("DEF"))
+	rootCmd.Flags().StringFlag(nil, "test-flag-3", "c", "Test Flag 3", Env("TEST_ENV_VAR"), Default("DEF"))
+
+	w := CustomWriter{}
+
+	p := DefaultPrinter{
+		Writer:           &w,
+		SuppressWarnings: false,
+	}
+
+	p.printHelp(&rootCmd)
+
+	got := w.String()
+	want := `app - short about for rootCmd
+
+Long About Section
+
+Usage:
+app [FLAGS]
+
+Flags:
+-a, --test-flag-1  Test Flag 1 [$TEST_ENV_VAR]
+-b, --test-flag-2  Test Flag 2 (default DEF)
+-c, --test-flag-3  Test Flag 3 (default DEF) [$TEST_ENV_VAR]
+`
+
+	if got != want {
+		t.Errorf("Full Help mismatch; got='%s', want='%s'", got, want)
+	}
+}

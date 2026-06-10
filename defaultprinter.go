@@ -194,20 +194,40 @@ func (p *DefaultPrinter) printSubcommands(c *Command) {
 	tw.Flush()
 }
 
+func (p *DefaultPrinter) printFlagLine(tw *tabwriter.Writer, f *Flag) {
+	fmt.Fprint(tw, p.getIndent())
+
+	if f.shortName != "" {
+		fmt.Fprintf(tw, "%s, ", p.Focus("-"+f.shortName))
+	}
+
+	fmt.Fprintf(tw, "%s", p.Focus("--"+f.name))
+
+	fmt.Fprintf(tw, "\t%s", f.about)
+
+	if f.defaultVal != nil {
+		defaultVal := getDefault(&f.Variable)
+		fmt.Fprintf(tw, " (default %s)", *defaultVal)
+	}
+
+	if f.env != nil {
+		fmt.Fprintf(tw, " [$%s", *f.env)
+
+		envVal := getFromEnv(&f.Variable)
+		if envVal != nil {
+			fmt.Fprintf(tw, "=%s", *envVal)
+		}
+		fmt.Fprint(tw, "]")
+	}
+
+	fmt.Fprintln(tw)
+}
+
 func (p *DefaultPrinter) printFlagsUtil(flags []*Flag) {
 	tw := tabwriter.NewWriter(p.Writer, 5, 0, 2, ' ', 0)
 
 	for _, f := range flags {
-		fmt.Fprint(tw, p.getIndent())
-
-		if f.shortName != "" {
-			fmt.Fprintf(tw, "%s, ", p.Focus("-"+f.shortName))
-		}
-
-		fmt.Fprintf(tw, "%s", p.Focus("--"+f.name))
-
-		fmt.Fprintf(tw, "\t%s", f.about)
-		fmt.Fprintln(tw)
+		p.printFlagLine(tw, f)
 	}
 
 	tw.Flush()
