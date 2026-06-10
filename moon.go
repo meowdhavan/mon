@@ -9,10 +9,10 @@ type Moon struct {
 
 func NewMoon(rootCmd *Command) *Moon {
 	p := DefaultPrinter{
-		Writer: os.Stdout,
+		Writer:           os.Stdout,
 		SuppressWarnings: false,
-		HeadingStyle: StyleUnderline,
-		FocusStyle: StyleNormal,
+		IndentLength:     4,
+		HeadingStyle:     []Style{StyleUnderline},
 	}
 
 	m := &Moon{
