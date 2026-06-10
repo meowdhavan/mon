@@ -28,12 +28,11 @@ func TestIntroLinePrint(t *testing.T) {
 
 	w := CustomWriter{}
 
-	p := NewDefaultPrinter(&w, false)
-	p.Focus = func(s string) string {
-		return s
-	}
-	p.Heading = func(s string) string {
-		return s
+	p := DefaultPrinter{
+		Writer: &w,
+		SuppressWarnings: false,
+		HeadingStyle: StyleNormal,
+		FocusStyle: StyleNormal,
 	}
 
 	p.printIntroLine(&c)
@@ -65,12 +64,11 @@ func TestFullHelpPrint(t *testing.T) {
 
 	w := CustomWriter{}
 
-	p := NewDefaultPrinter(&w, false)
-	p.Focus = func(s string) string {
-		return s
-	}
-	p.Heading = func(s string) string {
-		return s
+	p := DefaultPrinter{
+		Writer: &w,
+		SuppressWarnings: false,
+		HeadingStyle: StyleNormal,
+		FocusStyle: StyleNormal,
 	}
 
 	p.printHelp(&rootCmd)

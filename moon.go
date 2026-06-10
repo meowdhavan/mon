@@ -8,7 +8,12 @@ type Moon struct {
 }
 
 func NewMoon(rootCmd *Command) *Moon {
-	p := NewDefaultPrinter(os.Stdout, false)
+	p := DefaultPrinter{
+		Writer: os.Stdout,
+		SuppressWarnings: false,
+		HeadingStyle: StyleUnderline,
+		FocusStyle: StyleNormal,
+	}
 
 	m := &Moon{
 		RootCmd: rootCmd,

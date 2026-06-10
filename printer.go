@@ -15,106 +15,123 @@ type Printer interface {
 	printFullUsage(*Command, *[]error, *[]error)
 }
 
-type defaultPrinter struct {
-	w                io.Writer
-	suppressWarnings bool
-	Heading          func(string) string
-	Focus            func(string) string
+type style int
+
+const (
+	StyleNormal style = iota
+	StyleBold
+	StyleUnderline
+	StyleBoldUnderline
+)
+
+type DefaultPrinter struct {
+	Writer           io.Writer
+	SuppressWarnings bool
+	HeadingStyle     style
+	FocusStyle       style
 }
 
-func NewDefaultPrinter(w io.Writer, suppressWarnings bool) defaultPrinter {
-	return defaultPrinter{
-		w: w,
-		suppressWarnings: suppressWarnings,
-		Heading: func(s string) string {
-			return fmt.Sprintf("\x1b[4m%s\x1b[24m", s)
-		},
-		Focus: func(s string) string {
-			return s
-		},
+func formatText(s string, sty style) string {
+	switch sty {
+	case StyleBold:
+		return fmt.Sprintf("\x1b[4m%s\x1b[24m", s)
+	case StyleUnderline:
+		return fmt.Sprintf("\033[4m%s\033[0m", s)
+	case StyleBoldUnderline:
+		return fmt.Sprintf("\033[4m\x1b[4m%s\x1b[24m\033[0m", s)
 	}
+
+	return s
 }
 
-func (p *defaultPrinter) printErrors(errors *[]error) {
+func (p *DefaultPrinter) Heading(s string) string {
+	return formatText(s, p.HeadingStyle)
+}
+
+func (p *DefaultPrinter) Focus(s string) string {
+	return formatText(s, p.FocusStyle)
+}
+
+func (p *DefaultPrinter) printErrors(errors *[]error) {
 	if len(*errors) == 0 {
 		return
 	}
 
 	if len(*errors) == 1 {
-		fmt.Fprintf(p.w, "%s\n", p.Heading("Error:"))
+		fmt.Fprintf(p.Writer, "%s\n", p.Heading("Error:"))
 	} else {
-		fmt.Fprintf(p.w, "%s\n", p.Heading("Errors ("+strconv.Itoa(len(*errors))+"):"))
+		fmt.Fprintf(p.Writer, "%s\n", p.Heading("Errors ("+strconv.Itoa(len(*errors))+"):"))
 	}
 
 	for _, e := range *errors {
-		fmt.Fprintf(p.w, "    - %s\n", e.Error())
+		fmt.Fprintf(p.Writer, "    - %s\n", e.Error())
 	}
 
-	fmt.Println(p.w)
+	fmt.Println(p.Writer)
 }
 
-func (p *defaultPrinter) printWarnings(warnings *[]error) {
-	if p.suppressWarnings || len(*warnings) == 0 {
+func (p *DefaultPrinter) printWarnings(warnings *[]error) {
+	if p.SuppressWarnings || len(*warnings) == 0 {
 		return
 	}
 
 	if len(*warnings) == 1 {
-		fmt.Fprintf(p.w, "%s\n", p.Heading("Warning:"))
+		fmt.Fprintf(p.Writer, "%s\n", p.Heading("Warning:"))
 	} else {
-		fmt.Fprintf(p.w, "%s\n", p.Heading("Warnings ("+strconv.Itoa(len(*warnings))+"):"))
+		fmt.Fprintf(p.Writer, "%s\n", p.Heading("Warnings ("+strconv.Itoa(len(*warnings))+"):"))
 	}
 
 	for _, e := range *warnings {
-		fmt.Fprintf(p.w, "    - %s\n", e.Error())
+		fmt.Fprintf(p.Writer, "    - %s\n", e.Error())
 	}
 
-	fmt.Println(p.w)
+	fmt.Println(p.Writer)
 }
 
-func (p *defaultPrinter) printHelp(c *Command) {
+func (p *DefaultPrinter) printHelp(c *Command) {
 	p.printIntroLine(c)
-	fmt.Fprintln(p.w)
+	fmt.Fprintln(p.Writer)
 	p.printAboutLong(c)
 	if c.AboutLong != "" {
-		fmt.Fprintln(p.w)
+		fmt.Fprintln(p.Writer)
 	}
 	p.printFullUsage(c, &[]error{}, &[]error{})
 }
 
-func (p *defaultPrinter) printIntroLine(c *Command) {
-	fmt.Fprint(p.w, p.Focus(c.Name))
+func (p *DefaultPrinter) printIntroLine(c *Command) {
+	fmt.Fprint(p.Writer, p.Focus(c.Name))
 	if c.AboutShort != "" {
-		fmt.Fprint(p.w, " - ")
-		fmt.Fprint(p.w, c.AboutShort)
+		fmt.Fprint(p.Writer, " - ")
+		fmt.Fprint(p.Writer, c.AboutShort)
 	}
 
-	fmt.Fprintln(p.w)
+	fmt.Fprintln(p.Writer)
 }
 
-func (p *defaultPrinter) printFullUsage(c *Command, errors *[]error, warnings *[]error) {
+func (p *DefaultPrinter) printFullUsage(c *Command, errors *[]error, warnings *[]error) {
 	p.printErrors(errors)
 	p.printWarnings(warnings)
 	p.printUsage(c)
-	fmt.Fprintln(p.w)
+	fmt.Fprintln(p.Writer)
 	p.printSubcommands(c)
 	if len(c.subcommands) > 0 {
-		fmt.Fprintln(p.w)
+		fmt.Fprintln(p.Writer)
 	}
 	p.printFlags(c)
 }
 
-func (p *defaultPrinter) printAboutLong(c *Command) {
+func (p *DefaultPrinter) printAboutLong(c *Command) {
 	if c.AboutLong == "" {
 		return
 	}
 
-	fmt.Fprintln(p.w, c.AboutLong)
+	fmt.Fprintln(p.Writer, c.AboutLong)
 }
 
-func (p *defaultPrinter) printUsage(c *Command) {
-	fmt.Fprintln(p.w, p.Heading("Usage:"))
+func (p *DefaultPrinter) printUsage(c *Command) {
+	fmt.Fprintln(p.Writer, p.Heading("Usage:"))
 
-	fmt.Fprint(p.w, "    ")
+	fmt.Fprint(p.Writer, "    ")
 
 	var cur *Command
 	cur = c
@@ -128,39 +145,39 @@ func (p *defaultPrinter) printUsage(c *Command) {
 
 	slices.Reverse(commands)
 
-	fmt.Fprintf(p.w, "%s", strings.Join(commands, " "))
+	fmt.Fprintf(p.Writer, "%s", strings.Join(commands, " "))
 
 	if len(c.flags) > 0 {
-		fmt.Fprint(p.w, " [FLAGS]")
+		fmt.Fprint(p.Writer, " [FLAGS]")
 	}
 
 	if len(c.subcommands) > 0 {
-		fmt.Fprint(p.w, " <COMMAND>")
+		fmt.Fprint(p.Writer, " <COMMAND>")
 	} else {
 		for _, a := range c.requiredPosArgs {
-			fmt.Fprintf(p.w, " <%s>", a.name)
+			fmt.Fprintf(p.Writer, " <%s>", a.name)
 		}
 
 		for _, a := range c.optionalPosArgs {
-			fmt.Fprintf(p.w, " <%s>", a.name)
+			fmt.Fprintf(p.Writer, " <%s>", a.name)
 		}
 
 		if c.varLenArg != nil {
-			fmt.Fprintf(p.w, " <...%s>", c.varLenArg.name)
+			fmt.Fprintf(p.Writer, " <...%s>", c.varLenArg.name)
 		}
 	}
 
-	fmt.Fprintln(p.w)
+	fmt.Fprintln(p.Writer)
 }
 
-func (p *defaultPrinter) printSubcommands(c *Command) {
+func (p *DefaultPrinter) printSubcommands(c *Command) {
 	if len(c.subcommands) == 0 {
 		return
 	}
 
-	fmt.Fprintln(p.w, p.Heading("Commands:"))
+	fmt.Fprintln(p.Writer, p.Heading("Commands:"))
 
-	tw := tabwriter.NewWriter(p.w, 5, 0, 2, ' ', 0)
+	tw := tabwriter.NewWriter(p.Writer, 5, 0, 2, ' ', 0)
 
 	for _, s := range c.subcommands {
 		fmt.Fprintf(tw, "    %s", p.Focus(s.Name))
@@ -173,7 +190,7 @@ func (p *defaultPrinter) printSubcommands(c *Command) {
 	tw.Flush()
 }
 
-func (p *defaultPrinter) printFlags(c *Command) {
+func (p *DefaultPrinter) printFlags(c *Command) {
 	flags := []*Flag{}
 
 	var cur *Command
@@ -188,9 +205,9 @@ func (p *defaultPrinter) printFlags(c *Command) {
 		return
 	}
 
-	fmt.Fprintln(p.w, p.Heading("Flags:"))
+	fmt.Fprintln(p.Writer, p.Heading("Flags:"))
 
-	tw := tabwriter.NewWriter(p.w, 5, 0, 2, ' ', 0)
+	tw := tabwriter.NewWriter(p.Writer, 5, 0, 2, ' ', 0)
 
 	for _, f := range flags {
 		fmt.Fprintf(tw, "    %s", p.Focus("--"+f.name))
