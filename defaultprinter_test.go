@@ -1,22 +1,9 @@
 package moon
 
 import (
-	"bytes"
 	"fmt"
 	"testing"
 )
-
-type CustomWriter struct {
-	buf bytes.Buffer
-}
-
-func (c *CustomWriter) Write(p []byte) (n int, err error) {
-	return c.buf.Write(p)
-}
-
-func (c *CustomWriter) String() string {
-	return c.buf.String()
-}
 
 func TestIntroLinePrint(t *testing.T) {
 	c := Command{
@@ -27,16 +14,12 @@ func TestIntroLinePrint(t *testing.T) {
 
 	c.Flags().StringFlag(nil, "test-flag", "t", "Test Flag")
 
-	w := CustomWriter{}
-
 	p := DefaultPrinter{
-		Writer:           &w,
 		SuppressWarnings: false,
 	}
 
-	p.printIntroLine(&c)
+	got := p.printIntroLine(&c)
 
-	got := w.String()
 	want := "app - short about\n"
 
 	if got != want {
@@ -61,16 +44,12 @@ func TestFullHelpPrint(t *testing.T) {
 
 	rootCmd.Subcommand(&subCmd)
 
-	w := CustomWriter{}
-
 	p := DefaultPrinter{
-		Writer:           &w,
 		SuppressWarnings: false,
 	}
 
-	p.printHelp(&rootCmd)
+	got := p.printHelp(&rootCmd)
 
-	got := w.String()
 	want := `app - short about for rootCmd
 
 Long About Section
@@ -107,17 +86,13 @@ func TestIndentPrint(t *testing.T) {
 
 	rootCmd.Subcommand(&subCmd)
 
-	w := CustomWriter{}
-
 	p := DefaultPrinter{
-		Writer:           &w,
 		SuppressWarnings: false,
 		IndentLength:     4,
 	}
 
-	p.printHelp(&rootCmd)
+	got := p.printHelp(&rootCmd)
 
-	got := w.String()
 	want := `app - short about for rootCmd
 
 Long About Section
@@ -150,16 +125,12 @@ func TestLocalFlagsPrint(t *testing.T) {
 		rootCmd.Flags().StringFlag(nil, fmt.Sprintf("local-flag-%d", i+1), "t", fmt.Sprintf("Local Flag %d", i+1))
 	}
 
-	w := CustomWriter{}
-
 	p := DefaultPrinter{
-		Writer:           &w,
 		SuppressWarnings: false,
 	}
 
-	p.printHelp(&rootCmd)
+	got := p.printHelp(&rootCmd)
 
-	got := w.String()
 	want := `app - short about for rootCmd
 
 Long About Section
@@ -187,16 +158,12 @@ func TestInitialIndentPrint(t *testing.T) {
 	rootCmd.Flags().StringFlag(nil, "local-flag-2", "", "Local Flag 2")
 	rootCmd.Flags().StringFlag(nil, "local-flag-3", "", "Local Flag 3")
 
-	w := CustomWriter{}
-
 	p := DefaultPrinter{
-		Writer:           &w,
 		SuppressWarnings: false,
 	}
 
-	p.printHelp(&rootCmd)
+	got := p.printHelp(&rootCmd)
 
-	got := w.String()
 	want := `app - short about for rootCmd
 
 Usage:
@@ -226,16 +193,12 @@ func TestGlobalFlagsPrint(t *testing.T) {
 		rootCmd.GlobalFlags().StringFlag(nil, fmt.Sprintf("global-flag-%d", i+1), "t", fmt.Sprintf("Global Flag %d", i+1))
 	}
 
-	w := CustomWriter{}
-
 	p := DefaultPrinter{
-		Writer:           &w,
 		SuppressWarnings: false,
 	}
 
-	p.printHelp(&rootCmd)
+	got := p.printHelp(&rootCmd)
 
-	got := w.String()
 	want := `app - short about for rootCmd
 
 Long About Section
@@ -274,16 +237,12 @@ func TestLocalAndGlobalFlagsPrint(t *testing.T) {
 		rootCmd.GlobalFlags().StringFlag(nil, fmt.Sprintf("global-flag-%d", i+1), "t", fmt.Sprintf("Global Flag %d", i+1))
 	}
 
-	w := CustomWriter{}
-
 	p := DefaultPrinter{
-		Writer:           &w,
 		SuppressWarnings: false,
 	}
 
-	p.printHelp(&rootCmd)
+	got := p.printHelp(&rootCmd)
 
-	got := w.String()
 	want := `app - short about for rootCmd
 
 Long About Section
@@ -319,16 +278,12 @@ func TestFlagFallbackPrint(t *testing.T) {
 	rootCmd.Flags().StringFlag(nil, "test-flag-4", "d", "Test Flag 4", Default("DEF"))
 	rootCmd.Flags().StringFlag(nil, "test-flag-5", "e", "Test Flag 5", Env("TEST_ENV_VAR"), Default("DEF"))
 
-	w := CustomWriter{}
-
 	p := DefaultPrinter{
-		Writer:           &w,
 		SuppressWarnings: false,
 	}
 
-	p.printHelp(&rootCmd)
+	got := p.printHelp(&rootCmd)
 
-	got := w.String()
 	want := `app - short about for rootCmd
 
 Long About Section

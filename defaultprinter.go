@@ -2,7 +2,6 @@ package moon
 
 import (
 	"fmt"
-	"io"
 	"slices"
 	"strconv"
 	"strings"
@@ -18,7 +17,6 @@ const (
 )
 
 type DefaultPrinter struct {
-	Writer           io.Writer
 	SuppressWarnings bool
 	IndentLength     int
 	HeadingStyle     []Style
@@ -52,113 +50,144 @@ func (p *DefaultPrinter) getIndent() string {
 	return strings.Repeat(" ", p.IndentLength)
 }
 
-func (p *DefaultPrinter) printErrors(errors *[]error) {
+func (p *DefaultPrinter) printErrors(errors *[]error) string {
+	var b strings.Builder
+
 	if len(*errors) == 0 {
-		return
+		return b.String()
 	}
 
 	if len(*errors) == 1 {
-		fmt.Fprintf(p.Writer, "%s\n", p.Heading("Error:"))
+		b.WriteString(fmt.Sprintf("%s\n", p.Heading("Error:")))
 	} else {
-		fmt.Fprintf(p.Writer, "%s\n", p.Heading("Errors ("+strconv.Itoa(len(*errors))+"):"))
+		b.WriteString(fmt.Sprintf("%s\n", p.Heading("Errors ("+strconv.Itoa(len(*errors))+"):")))
 	}
 
 	for _, e := range *errors {
-		fmt.Fprintf(p.Writer, "%s- %s\n", p.getIndent(), e.Error())
+		b.WriteString(fmt.Sprintf("%s- %s\n", p.getIndent(), e.Error()))
 	}
 
-	fmt.Println(p.Writer)
+	b.WriteString("\n")
+
+	return b.String()
 }
 
-func (p *DefaultPrinter) printWarnings(warnings *[]error) {
+func (p *DefaultPrinter) printWarnings(warnings *[]error) string {
+	var b strings.Builder
+
 	if p.SuppressWarnings || len(*warnings) == 0 {
-		return
+		return b.String()
 	}
 
 	if len(*warnings) == 1 {
-		fmt.Fprintf(p.Writer, "%s\n", p.Heading("Warning:"))
+		b.WriteString(fmt.Sprintf("%s\n", p.Heading("Warning:")))
 	} else {
-		fmt.Fprintf(p.Writer, "%s\n", p.Heading("Warnings ("+strconv.Itoa(len(*warnings))+"):"))
+		b.WriteString(fmt.Sprintf("%s\n", p.Heading("Warnings ("+strconv.Itoa(len(*warnings))+"):")))
 	}
 
 	for _, e := range *warnings {
-		fmt.Fprintf(p.Writer, "%s- %s\n", p.getIndent(), e.Error())
+		b.WriteString(fmt.Sprintf("%s- %s\n", p.getIndent(), e.Error()))
 	}
 
-	fmt.Println(p.Writer)
+	b.WriteString("\n")
+
+	return b.String()
 }
 
-func (p *DefaultPrinter) printHelp(c *Command) {
-	p.printIntroLine(c)
-	fmt.Fprintln(p.Writer)
-	p.printAboutLong(c)
+func (p *DefaultPrinter) printHelp(c *Command) string {
+	var b strings.Builder
+
+	b.WriteString(p.printIntroLine(c));
+	b.WriteString("\n")
+	b.WriteString(p.printAboutLong(c))
 	if c.AboutLong != "" {
-		fmt.Fprintln(p.Writer)
+		b.WriteString("\n")
 	}
-	p.printFullUsage(c, &[]error{}, &[]error{})
+	b.WriteString(p.printFullUsage(c, &[]error{}, &[]error{}))
+
+	return b.String()
 }
 
-func (p *DefaultPrinter) printIntroLine(c *Command) {
-	fmt.Fprint(p.Writer, p.Focus(c.Name))
+func (p *DefaultPrinter) printIntroLine(c *Command) string {
+	var b strings.Builder
+
+	b.WriteString(p.Focus(c.Name))
 	if c.AboutShort != "" {
-		fmt.Fprint(p.Writer, " - ")
-		fmt.Fprint(p.Writer, c.AboutShort)
+		b.WriteString(fmt.Sprintf(" - %s", c.AboutShort))
 	}
 
-	fmt.Fprintln(p.Writer)
+	b.WriteString("\n")
+
+	return b.String()
 }
 
-func (p *DefaultPrinter) printFullUsage(c *Command, errors *[]error, warnings *[]error) {
-	p.printErrors(errors)
-	p.printWarnings(warnings)
-	p.printUsage(c)
-	fmt.Fprintln(p.Writer)
-	p.printSubcommands(c)
+func (p *DefaultPrinter) printFullUsage(c *Command, errors *[]error, warnings *[]error) string {
+	var b strings.Builder
+
+	b.WriteString(p.printErrors(errors))
+	b.WriteString(p.printWarnings(warnings))
+	b.WriteString(p.printUsage(c))
+	b.WriteString("\n")
+	b.WriteString(p.printSubcommands(c))
 	if len(c.subcommands) > 0 {
-		fmt.Fprintln(p.Writer)
+		b.WriteString("\n")
 	}
-	p.printFlags(c)
+	b.WriteString(p.printFlags(c))
+
+	return b.String()
 }
 
-func (p *DefaultPrinter) printAboutLong(c *Command) {
+func (p *DefaultPrinter) printAboutLong(c *Command) string {
+	var b strings.Builder
+
 	if c.AboutLong == "" {
-		return
+		return b.String()
 	}
 
-	fmt.Fprintln(p.Writer, c.AboutLong)
+	b.WriteString(c.AboutLong)
+	b.WriteString("\n")
+
+	return b.String()
 }
 
-func (p *DefaultPrinter) printUsage(c *Command) {
-	fmt.Fprintln(p.Writer, p.Heading("Usage:"))
+func (p *DefaultPrinter) printUsage(c *Command) string {
+	var b strings.Builder
 
-	fmt.Fprint(p.Writer, p.getIndent())
+	b.WriteString(p.Heading("Usage:"));
+	b.WriteString("\n")
 
-	p.printCommand(c)
+	b.WriteString(p.getIndent())
+
+	b.WriteString(p.printCommand(c))
 
 	if len(c.globalFlags.flags) > 0 || len(c.localFlags.flags) > 0 {
-		fmt.Fprint(p.Writer, " [FLAGS]")
+		b.WriteString(" [FLAGS]")
 	}
 
 	if len(c.subcommands) > 0 {
-		fmt.Fprint(p.Writer, " <COMMAND>")
+		b.WriteString(" <COMMAND>")
 	} else {
 		for _, a := range c.requiredPosArgs {
-			fmt.Fprintf(p.Writer, " <%s>", a.name)
+			b.WriteString(" <" + a.name + ">")
 		}
 
 		for _, a := range c.optionalPosArgs {
-			fmt.Fprintf(p.Writer, " <%s>", a.name)
+			b.WriteString(" <" + a.name + ">")
 		}
 
 		if c.varLenArg != nil {
-			fmt.Fprintf(p.Writer, " <...%s>", c.varLenArg.name)
+			b.WriteString(" <..." + c.varLenArg.name + ">")
 		}
 	}
 
-	fmt.Fprintln(p.Writer)
+	b.WriteString("\n")
+
+	return b.String()
 }
 
-func (p *DefaultPrinter) printCommand(c *Command) {
+func (p *DefaultPrinter) printCommand(c *Command) string {
+	var b strings.Builder
+
 	var cur *Command
 	cur = c
 
@@ -171,27 +200,33 @@ func (p *DefaultPrinter) printCommand(c *Command) {
 
 	slices.Reverse(commands)
 
-	fmt.Fprintf(p.Writer, "%s", strings.Join(commands, " "))
+	b.WriteString(strings.Join(commands, " "))
+
+	return b.String()
 }
 
-func (p *DefaultPrinter) printSubcommands(c *Command) {
+func (p *DefaultPrinter) printSubcommands(c *Command) string {
+	var b strings.Builder
+
 	if len(c.subcommands) == 0 {
-		return
+		return b.String()
 	}
 
-	fmt.Fprintln(p.Writer, p.Heading("Commands:"))
+	b.WriteString(p.Heading("Commands:"));
+	b.WriteString("\n")
 
-	tw := tabwriter.NewWriter(p.Writer, 5, 0, 2, ' ', 0)
+	tw := tabwriter.NewWriter(&b, 5, 0, 2, ' ', 0)
 
 	for _, s := range c.subcommands {
 		fmt.Fprintf(tw, "%s%s", p.getIndent(), p.Focus(s.Name))
-
 		fmt.Fprintf(tw, "\t%s", s.AboutShort)
 	}
 
 	fmt.Fprintln(tw)
 
 	tw.Flush()
+
+	return b.String()
 }
 
 func (p *DefaultPrinter) printFlagLine(tw *tabwriter.Writer, f *Flag, initialIndent bool) {
@@ -227,7 +262,9 @@ func (p *DefaultPrinter) printFlagLine(tw *tabwriter.Writer, f *Flag, initialInd
 	fmt.Fprintln(tw)
 }
 
-func (p *DefaultPrinter) printFlagsUtil(flags []*Flag) {
+func (p *DefaultPrinter) printFlagsUtil(flags []*Flag) string {
+	var b strings.Builder
+
 	initialIndent := false
 
 	for _, f := range flags {
@@ -237,16 +274,20 @@ func (p *DefaultPrinter) printFlagsUtil(flags []*Flag) {
 		}
 	}
 
-	tw := tabwriter.NewWriter(p.Writer, 5, 0, 2, ' ', 0)
+	tw := tabwriter.NewWriter(&b, 5, 0, 2, ' ', 0)
 
 	for _, f := range flags {
 		p.printFlagLine(tw, f, initialIndent)
 	}
 
 	tw.Flush()
+
+	return b.String()
 }
 
-func (p *DefaultPrinter) printFlags(c *Command) {
+func (p *DefaultPrinter) printFlags(c *Command) string {
+	var b strings.Builder
+
 	globalFlags := []*Flag{}
 
 	var cur *Command
@@ -258,16 +299,22 @@ func (p *DefaultPrinter) printFlags(c *Command) {
 	}
 
 	if len(c.localFlags.flags) > 0 {
-		fmt.Fprintln(p.Writer, p.Heading("Flags:"))
-		p.printFlagsUtil(c.localFlags.flags)
+		b.WriteString(p.Heading("Flags:"))
+		b.WriteString("\n")
+
+		b.WriteString(p.printFlagsUtil(c.localFlags.flags))
 	}
 
 	if len(globalFlags) > 0 {
 		if len(c.localFlags.flags) > 0 {
-			fmt.Fprintln(p.Writer)
+			b.WriteString("\n")
 		}
 
-		fmt.Fprintln(p.Writer, p.Heading("Global Flags:"))
-		p.printFlagsUtil(globalFlags)
+		b.WriteString(p.Heading("Global Flags:"));
+		b.WriteString("\n")
+
+		b.WriteString(p.printFlagsUtil(globalFlags))
 	}
+
+	return b.String()
 }
