@@ -168,15 +168,21 @@ func (p *DefaultPrinter) printUsage(c *Command) string {
 		b.WriteString(" <COMMAND>")
 	} else {
 		for _, a := range c.requiredPosArgs {
-			b.WriteString(" <" + a.name + ">")
+			b.WriteString(" <");
+			b.WriteString(a.name);
+			b.WriteString(">")
 		}
 
 		for _, a := range c.optionalPosArgs {
-			b.WriteString(" <" + a.name + ">")
+			b.WriteString(" <");
+			b.WriteString(a.name);
+			b.WriteString(">")
 		}
 
 		if c.varLenArg != nil {
-			b.WriteString(" <..." + c.varLenArg.name + ">")
+			b.WriteString(" <...");
+			b.WriteString(c.varLenArg.name);
+			b.WriteString(">")
 		}
 	}
 
