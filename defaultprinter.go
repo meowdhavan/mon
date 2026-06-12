@@ -19,6 +19,7 @@ const (
 type DefaultPrinter struct {
 	SuppressWarnings bool
 	IndentLength     int
+	HelperMaxLength  int
 	HeadingStyle     []Style
 	FocusStyle       []Style
 }
@@ -97,7 +98,7 @@ func (p *DefaultPrinter) printWarnings(warnings *[]error) string {
 func (p *DefaultPrinter) printHelp(c *Command) string {
 	var b strings.Builder
 
-	b.WriteString(p.printIntroLine(c));
+	b.WriteString(p.printIntroLine(c))
 	b.WriteString("\n")
 	b.WriteString(p.printAboutLong(c))
 	if c.AboutLong != "" {
@@ -153,7 +154,7 @@ func (p *DefaultPrinter) printAboutLong(c *Command) string {
 func (p *DefaultPrinter) printUsage(c *Command) string {
 	var b strings.Builder
 
-	b.WriteString(p.Heading("Usage:"));
+	b.WriteString(p.Heading("Usage:"))
 	b.WriteString("\n")
 
 	b.WriteString(p.getIndent())
@@ -168,20 +169,20 @@ func (p *DefaultPrinter) printUsage(c *Command) string {
 		b.WriteString(" <COMMAND>")
 	} else {
 		for _, a := range c.requiredPosArgs {
-			b.WriteString(" <");
-			b.WriteString(a.name);
+			b.WriteString(" <")
+			b.WriteString(a.name)
 			b.WriteString(">")
 		}
 
 		for _, a := range c.optionalPosArgs {
-			b.WriteString(" <");
-			b.WriteString(a.name);
+			b.WriteString(" <")
+			b.WriteString(a.name)
 			b.WriteString(">")
 		}
 
 		if c.varLenArg != nil {
-			b.WriteString(" <...");
-			b.WriteString(c.varLenArg.name);
+			b.WriteString(" <...")
+			b.WriteString(c.varLenArg.name)
 			b.WriteString(">")
 		}
 	}
@@ -218,7 +219,7 @@ func (p *DefaultPrinter) printSubcommands(c *Command) string {
 		return b.String()
 	}
 
-	b.WriteString(p.Heading("Commands:"));
+	b.WriteString(p.Heading("Commands:"))
 	b.WriteString("\n")
 
 	tw := tabwriter.NewWriter(&b, 5, 0, 2, ' ', 0)
@@ -235,7 +236,7 @@ func (p *DefaultPrinter) printSubcommands(c *Command) string {
 	return b.String()
 }
 
-func (p *DefaultPrinter) printFlagLine(tw *tabwriter.Writer, f *Flag, initialIndent bool) {
+func (p *DefaultPrinter) printFlagLine(tw *tabwriter.Writer, f *Flag, initialIndent bool, splitHelperLines bool) {
 	fmt.Fprint(tw, p.getIndent())
 
 	if f.shortName != "" {
@@ -280,33 +281,56 @@ func (p *DefaultPrinter) printFlagLine(tw *tabwriter.Writer, f *Flag, initialInd
 	if len(helpers) > 0 {
 		helperSep := " "
 
-		fmt.Fprintf(tw, " %s", strings.Join(helpers, helperSep))
+		if splitHelperLines {
+			helperSep = "\n\t"
+		}
+
+		fmt.Fprintf(tw, "%s%s", helperSep, strings.Join(helpers, helperSep))
 	}
 
 	fmt.Fprintln(tw)
 }
 
-func (p *DefaultPrinter) printFlagsUtil(flags []*Flag) string {
-	var b strings.Builder
-
-	initialIndent := false
-
+func (p *DefaultPrinter) getInitialIndent(flags []*Flag) bool {
 	for _, f := range flags {
 		if f.shortName != "" {
-			initialIndent = true
-			break
+			return true
 		}
 	}
+
+	return false
+}
+
+func (p *DefaultPrinter) printFlagsUtil(flags []*Flag, splitHelperLines bool) string {
+	var b strings.Builder
+
+	initialIndent := p.getInitialIndent(flags)
 
 	tw := tabwriter.NewWriter(&b, 5, 0, 2, ' ', 0)
 
 	for _, f := range flags {
-		p.printFlagLine(tw, f, initialIndent)
+		p.printFlagLine(tw, f, initialIndent, splitHelperLines)
 	}
 
 	tw.Flush()
 
 	return b.String()
+}
+
+func (p *DefaultPrinter) getMaxHelperLength(flags []*Flag) int {
+	flagLines := p.printFlagsUtil(flags, false)
+
+	lines := strings.Split(flagLines, "\n")
+
+	maxLen := 0
+
+	for _, l := range lines {
+		if len(l) > maxLen {
+			maxLen = len(l)
+		}
+	}
+
+	return maxLen
 }
 
 func (p *DefaultPrinter) printFlags(c *Command) string {
@@ -323,21 +347,27 @@ func (p *DefaultPrinter) printFlags(c *Command) string {
 	}
 
 	if len(c.localFlags.flags) > 0 {
+		maxHelperLen := p.getMaxHelperLength(c.localFlags.flags)
+		splitHelperLines := maxHelperLen > p.HelperMaxLength
+
 		b.WriteString(p.Heading("Flags:"))
 		b.WriteString("\n")
 
-		b.WriteString(p.printFlagsUtil(c.localFlags.flags))
+		b.WriteString(p.printFlagsUtil(c.localFlags.flags, splitHelperLines))
 	}
 
 	if len(globalFlags) > 0 {
+		maxHelperLen := p.getMaxHelperLength(globalFlags)
+		splitHelperLines := maxHelperLen > p.HelperMaxLength
+
 		if len(c.localFlags.flags) > 0 {
 			b.WriteString("\n")
 		}
 
-		b.WriteString(p.Heading("Global Flags:"));
+		b.WriteString(p.Heading("Global Flags:"))
 		b.WriteString("\n")
 
-		b.WriteString(p.printFlagsUtil(globalFlags))
+		b.WriteString(p.printFlagsUtil(globalFlags, splitHelperLines))
 	}
 
 	return b.String()

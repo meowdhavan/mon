@@ -15,6 +15,7 @@ func NewMoon(rootCmd *Command) *Moon {
 		SuppressWarnings: false,
 		IndentLength:     4,
 		HeadingStyle:     []Style{StyleUnderline},
+		HelperMaxLength:  80,
 	}
 
 	m := &Moon{

@@ -16,6 +16,7 @@ func TestIntroLinePrint(t *testing.T) {
 
 	p := DefaultPrinter{
 		SuppressWarnings: false,
+		HelperMaxLength:  80,
 	}
 
 	got := p.printIntroLine(&c)
@@ -46,6 +47,7 @@ func TestFullHelpPrint(t *testing.T) {
 
 	p := DefaultPrinter{
 		SuppressWarnings: false,
+		HelperMaxLength:  80,
 	}
 
 	got := p.printHelp(&rootCmd)
@@ -89,6 +91,7 @@ func TestIndentPrint(t *testing.T) {
 	p := DefaultPrinter{
 		SuppressWarnings: false,
 		IndentLength:     4,
+		HelperMaxLength:  80,
 	}
 
 	got := p.printHelp(&rootCmd)
@@ -127,6 +130,7 @@ func TestLocalFlagsPrint(t *testing.T) {
 
 	p := DefaultPrinter{
 		SuppressWarnings: false,
+		HelperMaxLength:  80,
 	}
 
 	got := p.printHelp(&rootCmd)
@@ -195,6 +199,7 @@ func TestGlobalFlagsPrint(t *testing.T) {
 
 	p := DefaultPrinter{
 		SuppressWarnings: false,
+		HelperMaxLength:  80,
 	}
 
 	got := p.printHelp(&rootCmd)
@@ -217,7 +222,6 @@ Global Flags:
 	}
 }
 
-
 func TestLocalAndGlobalFlagsPrint(t *testing.T) {
 	rootCmd := Command{
 		Name:       "app",
@@ -239,6 +243,7 @@ func TestLocalAndGlobalFlagsPrint(t *testing.T) {
 
 	p := DefaultPrinter{
 		SuppressWarnings: false,
+		HelperMaxLength:  80,
 	}
 
 	got := p.printHelp(&rootCmd)
@@ -280,6 +285,7 @@ func TestFlagFallbackPrint(t *testing.T) {
 
 	p := DefaultPrinter{
 		SuppressWarnings: false,
+		HelperMaxLength:  80,
 	}
 
 	got := p.printHelp(&rootCmd)
